@@ -15,8 +15,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  security-events: write
 
 jobs:
   validate-scan-test:
@@ -38,7 +36,7 @@ jobs:
         run: terraform fmt -check -recursive
         continue-on-error: true
 
-      # 2. Init & Validate (No remote state backend required)
+      # 2. Init & Validate
       - name: Terraform Init
         id: init
         run: terraform init -backend=false
@@ -48,7 +46,7 @@ jobs:
         run: terraform validate -no-color
         continue-on-error: true
 
-      # 3. Checkov Security Scan Action
+      # 3. Checkov Security Scan
       - name: Run Checkov Security Scan
         id: checkov
         uses: bridgecrewio/checkov-action@v12
@@ -65,25 +63,16 @@ jobs:
           name: checkov-security-report
           path: checkov-results.sarif
 
-      # 4. Trivy Security Scan Action
-      - name: Run Trivy Scanner (SARIF)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          scanners: "misconfig,secret"
-          format: "sarif"
-          output: "trivy-results.sarif"
-          severity: "CRITICAL,HIGH,MEDIUM"
-
-      - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
+      # 4. Convert SARIF Report to Markdown Action
+      - name: Convert SARIF Report to Markdown
+        uses: b-zurg/sarif-to-markdown@v1
         if: always()
         continue-on-error: true
         with:
-          sarif_file: "trivy-results.sarif"
+          sarif-file: checkov-results.sarif
+          output-file: checkov-markdown-report.md
 
-      # 5. Trivy HTML Report Artifact Action
+      # 5. Trivy Security Scan & Report Artifact
       - name: Generate Trivy HTML Report
         uses: aquasecurity/trivy-action@master
         if: always()
@@ -108,12 +97,12 @@ jobs:
         run: terraform test -no-color
         continue-on-error: true
 
-      # 7. Publish GitHub Actions Job Summary ($GITHUB_STEP_SUMMARY)
-      - name: Publish Workflow Job Summary
+      # 7. Publish Workflow Window Job Summary ($GITHUB_STEP_SUMMARY)
+      - name: Publish Workflow Summary
         if: always()
         run: |
           cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-          ### 🚀 Terraform CI/CD Summary
+          ### 🚀 Terraform CI Results
 
           | Step | Status |
           |---|---|
@@ -121,50 +110,22 @@ jobs:
           | ⚙️ **Initialization (`terraform init`)** | `${{ steps.init.outcome }}` |
           | ✅ **Validation (`terraform validate`)** | `${{ steps.validate.outcome }}` |
           | 🛡️ **Checkov Security Scan** | `${{ steps.checkov.outcome }}` |
-          | 🔍 **Trivy Security Scan** | Completed (Artifact & SARIF) |
+          | 🔍 **Trivy Security Scan** | Completed (Report in Artifacts) |
           | 🧪 **Terraform Tests (`terraform test`)** | `${{ steps.test.outcome }}` |
 
-          #### 📌 Generated Artifacts
+          #### 📌 Downloadable Artifacts
           - **Checkov Security Report**: `checkov-security-report` (`checkov-results.sarif`)
           - **Trivy Security Report**: `trivy-security-report` (`trivy-report.html`)
           EOF
 
-      # 8. Sticky PR Comment Action
-      - name: Post PR Summary Comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        if: always() && github.event_name == 'pull_request'
-        continue-on-error: true
-        with:
-          header: terraform-ci-summary
-          message: |
-            ### 🚀 Terraform CI Results
+          if [ -f "checkov-markdown-report.md" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "## 🛡️ Checkov Security Scan SARIF Summary" >> $GITHUB_STEP_SUMMARY
+            cat checkov-markdown-report.md >> $GITHUB_STEP_SUMMARY
+          fi
 
-            | Step | Status |
-            |---|---|
-            | 🎨 **Format Check (`terraform fmt`)** | `${{ steps.fmt.outcome }}` |
-            | ⚙️ **Initialization (`terraform init`)** | `${{ steps.init.outcome }}` |
-            | ✅ **Validation (`terraform validate`)** | `${{ steps.validate.outcome }}` |
-            | 🛡️ **Checkov Security Scan** | `${{ steps.checkov.outcome }}` |
-            | 🔍 **Trivy Security Scan** | Completed |
-            | 🧪 **Terraform Tests (`terraform test`)** | `${{ steps.test.outcome }}` |
-
-            <details><summary>Show Validation Output</summary>
-
-            ```
-            ${{ steps.validate.outputs.stdout || steps.validate.outputs.stderr || 'No validation errors' }}
-            ```
-
-            </details>
-
-            <details><summary>Show Test Output</summary>
-
-            ```
-            ${{ steps.test.outputs.stdout || steps.test.outputs.stderr || 'No test output' }}
-            ```
-
-            </details>
-
-      # 9. Pipeline Gatekeeper (Fail if core steps errored)
+      # 8. Pipeline Gatekeeper (Fail if core steps errored)
       - name: Pipeline Gatekeeper
         if: |
           steps.fmt.outcome == 'failure' ||
