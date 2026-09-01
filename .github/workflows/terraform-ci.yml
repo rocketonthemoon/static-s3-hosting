@@ -69,8 +69,9 @@ jobs:
           severity: "CRITICAL,HIGH,MEDIUM"
 
       - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
+        continue-on-error: true
         with:
           sarif_file: "trivy-results.sarif"
 
