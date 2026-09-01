@@ -76,12 +76,13 @@ jobs:
       - name: Generate Trivy HTML Report
         uses: aquasecurity/trivy-action@master
         if: always()
+        continue-on-error: true
         with:
           scan-type: "fs"
           scan-ref: "."
           scanners: "misconfig,secret"
           format: "template"
-          template: "@/contrib/html.tpl"
+          template: "@contrib/html.tpl"
           output: "trivy-report.html"
 
       - name: Upload Trivy HTML Report
