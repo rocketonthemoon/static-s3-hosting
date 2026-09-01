@@ -56,15 +56,7 @@ jobs:
           output_file_path: console,checkov-results.sarif
           soft_fail: true
 
-      - name: Upload Checkov Report Artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: checkov-security-report
-          path: checkov-results.sarif
-
-      # 4. Convert SARIF Report to Markdown Action (Publishes directly to Job Summary)
-      - name: Convert SARIF Report to Markdown
+      - name: Render Checkov Report to Summary
         uses: b-zurg/sarif-to-markdown@v1
         if: always()
         continue-on-error: true
@@ -72,38 +64,55 @@ jobs:
           file-path: checkov-results.sarif
           add-job-summary: true
 
-      # 5. Trivy Security Scan & Report Artifact
-      - name: Generate Trivy HTML Report
-        uses: aquasecurity/trivy-action@master
-        if: always()
-        continue-on-error: true
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          scanners: "misconfig,secret"
-          format: "template"
-          template: "@contrib/html.tpl"
-          output: "trivy-report.html"
-
-      - name: Upload Trivy HTML Report
+      - name: Upload Checkov Report Artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: trivy-security-report
-          path: trivy-report.html
+          name: checkov-security-report
+          path: checkov-results.sarif
 
-      # 6. Native Terraform Tests (.tftest.hcl)
+      # 4. SAST Code Scan (Trivy)
+      - name: Run Trivy vulnerability scanner (FS / SAST)
+        id: trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret,config'
+          format: 'sarif'
+          output: 'trivy-sast-results.sarif'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Render Trivy SAST Report to Summary
+        uses: b-zurg/sarif-to-markdown@v1
+        if: always()
+        continue-on-error: true
+        with:
+          file-path: 'trivy-sast-results.sarif'
+          add-job-summary: true
+
+      - name: Archive Trivy SAST SARIF artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-sast-report
+          path: trivy-sast-results.sarif
+
+      # 5. Native Terraform Tests (.tftest.hcl)
       - name: Run Native Terraform Tests
         id: test
         run: terraform test -no-color
         continue-on-error: true
 
-      # 7. Publish Workflow Summary Header ($GITHUB_STEP_SUMMARY)
-      - name: Publish Workflow Summary
+      # 6. Publish Overall Workflow Summary
+      - name: Publish Workflow Summary Header
         if: always()
         run: |
           cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-          ### 🚀 Terraform CI Results
+          ### 🚀 Terraform CI Summary Overview
 
           | Step | Status |
           |---|---|
@@ -111,15 +120,15 @@ jobs:
           | ⚙️ **Initialization (`terraform init`)** | `${{ steps.init.outcome }}` |
           | ✅ **Validation (`terraform validate`)** | `${{ steps.validate.outcome }}` |
           | 🛡️ **Checkov Security Scan** | `${{ steps.checkov.outcome }}` |
-          | 🔍 **Trivy Security Scan** | Completed (Report in Artifacts) |
+          | 🔍 **Trivy SAST Scan** | `${{ steps.trivy.outcome }}` |
           | 🧪 **Terraform Tests (`terraform test`)** | `${{ steps.test.outcome }}` |
 
           #### 📌 Downloadable Artifacts
           - **Checkov Security Report**: `checkov-security-report` (`checkov-results.sarif`)
-          - **Trivy Security Report**: `trivy-security-report` (`trivy-report.html`)
+          - **Trivy SAST Report**: `trivy-sast-report` (`trivy-sast-results.sarif`)
           EOF
 
-      # 8. Pipeline Gatekeeper (Fail if core steps errored)
+      # 7. Pipeline Gatekeeper (Fail if core steps errored)
       - name: Pipeline Gatekeeper
         if: |
           steps.fmt.outcome == 'failure' ||
