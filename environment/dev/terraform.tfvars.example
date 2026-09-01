@@ -1,0 +1,15 @@
+# AWS Region to deploy core resources (S3, Route 53)
+aws_region = "us-east-1"
+
+# Project metadata
+project     = "my-static-site"
+environment = "dev"
+
+# Domain & Route 53 configuration
+domain_name = "example.com"
+zone_name   = "example.com"
+
+# CloudFront & S3 configuration
+origin_path         = "/public"
+default_root_object = "index.html"
+error_page_path     = "/error.html"
