@@ -18,3 +18,8 @@ variable "cloudfront_distribution_arn" {
   description = "ARN of the CloudFront distribution"
   type        = string
 }
+
+variable "origin_path" {
+  description = "Path to the origin"
+  type        = string
+}

@@ -85,7 +85,7 @@ resource "aws_s3_bucket_policy" "cloudfront_oac" {
           Service = "cloudfront.amazonaws.com"
         }
         Action   = "s3:GetObject"
-        Resource = "${aws_s3_bucket.this.arn}/public/*"
+        Resource = "${aws_s3_bucket.this.arn}${var.origin_path}/*"
         Condition = {
           StringEquals = {
             "AWS:SourceArn" = var.cloudfront_distribution_arn

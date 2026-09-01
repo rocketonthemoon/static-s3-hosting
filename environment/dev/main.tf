@@ -24,6 +24,7 @@ module "s3_bucket" {
   tags                        = local.common_tags
   mime_types                  = local.mime_types
   cloudfront_distribution_arn = local.cloudfront_distribution_arn
+  origin_path                 = var.origin_path
 }
 
 module "route53" {

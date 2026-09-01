@@ -7,8 +7,8 @@ This module provisions a private AWS S3 bucket for static website hosting, uploa
 - **Private Storage**: Blocks all public access via `aws_s3_bucket_public_access_block`.
 - **Encryption**: Enables AES256 server-side encryption by default.
 - **Versioning**: Enables bucket versioning.
-- **Asset Upload**: Automatically scans the `assets/` directory and uploads website files to the `public/` prefix with correct MIME types.
-- **CloudFront OAC Security**: Restricts `s3:GetObject` access strictly to the CloudFront distribution via `AWS:SourceArn`.
+- **Dynamic Asset Upload**: Automatically scans the `assets/` directory and uploads website files into the configured `origin_path` prefix with correct MIME types.
+- **CloudFront OAC Security**: Restricts `s3:GetObject` access strictly to the CloudFront distribution via `AWS:SourceArn` matching `${aws_s3_bucket.this.arn}${var.origin_path}/*`.
 
 ## Resources Created
 
@@ -28,6 +28,7 @@ This module provisions a private AWS S3 bucket for static website hosting, uploa
 | `tags` | Map of tags to apply to resources | `map(string)` | no | `{}` |
 | `mime_types` | Map of file extensions to Content-Type headers | `map(string)` | yes | - |
 | `cloudfront_distribution_arn` | ARN of the CloudFront distribution allowed to access objects | `string` | yes | - |
+| `origin_path` | Origin path prefix (e.g. `/public`) | `string` | yes | - |
 
 ## Outputs
 
