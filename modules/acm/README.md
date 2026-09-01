@@ -28,7 +28,6 @@ This module requests an AWS Certificate Manager (ACM) SSL/TLS certificate with w
 |------|-------------|------|:--------:|:-------:|
 | `domain_name` | Primary domain name for the certificate | `string` | yes | - |
 | `environment` | Deployment environment name | `string` | yes | - |
-| `route53_zone_id` | Route 53 Hosted Zone ID | `string` | yes | - |
 | `acm_validation_records_fqdns` | List of FQDNs for DNS validation records | `list(string)` | yes | - |
 | `tags` | Map of tags to apply to resources | `map(string)` | no | `{}` |
 

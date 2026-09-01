@@ -25,8 +25,6 @@ This module provisions a private AWS S3 bucket for static website hosting, uploa
 | Name | Description | Type | Required | Default |
 |------|-------------|------|:--------:|:-------:|
 | `bucket_name` | Name of the S3 bucket | `string` | yes | - |
-| `environment` | Deployment environment (e.g. `dev`, `prod`) | `string` | yes | - |
-| `project` | Name of the project | `string` | yes | - |
 | `tags` | Map of tags to apply to resources | `map(string)` | no | `{}` |
 | `mime_types` | Map of file extensions to Content-Type headers | `map(string)` | yes | - |
 | `cloudfront_distribution_arn` | ARN of the CloudFront distribution allowed to access objects | `string` | yes | - |

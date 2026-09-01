@@ -14,11 +14,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "route53_zone_id" {
-  description = "Route53 zone ID"
-  type        = string
-}
-
 variable "acm_validation_records_fqdns" {
   description = "Route53 fqdns"
   type        = list(string)

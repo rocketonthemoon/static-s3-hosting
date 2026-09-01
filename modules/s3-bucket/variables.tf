@@ -1,15 +1,5 @@
-variable "environment" {
-  description = "Environment name"
-  type        = string
-}
-
 variable "bucket_name" {
   description = "Name of the bucket"
-  type        = string
-}
-
-variable "project" {
-  description = "Name of the project"
   type        = string
 }
 
