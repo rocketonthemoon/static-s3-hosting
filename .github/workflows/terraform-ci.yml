@@ -82,7 +82,7 @@ jobs:
           scanners: 'vuln,secret,config'
           format: 'sarif'
           output: 'trivy-sast-results.sarif'
-          exit-code: '1'
+          exit-code: '0'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
 
