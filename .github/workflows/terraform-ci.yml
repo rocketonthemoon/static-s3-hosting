@@ -63,14 +63,14 @@ jobs:
           name: checkov-security-report
           path: checkov-results.sarif
 
-      # 4. Convert SARIF Report to Markdown Action
+      # 4. Convert SARIF Report to Markdown Action (Publishes directly to Job Summary)
       - name: Convert SARIF Report to Markdown
         uses: b-zurg/sarif-to-markdown@v1
         if: always()
         continue-on-error: true
         with:
-          sarif-file: checkov-results.sarif
-          output-file: checkov-markdown-report.md
+          file-path: checkov-results.sarif
+          add-job-summary: true
 
       # 5. Trivy Security Scan & Report Artifact
       - name: Generate Trivy HTML Report
@@ -97,7 +97,7 @@ jobs:
         run: terraform test -no-color
         continue-on-error: true
 
-      # 7. Publish Workflow Window Job Summary ($GITHUB_STEP_SUMMARY)
+      # 7. Publish Workflow Summary Header ($GITHUB_STEP_SUMMARY)
       - name: Publish Workflow Summary
         if: always()
         run: |
@@ -117,13 +117,6 @@ jobs:
           - **Checkov Security Report**: `checkov-security-report` (`checkov-results.sarif`)
           - **Trivy Security Report**: `trivy-security-report` (`trivy-report.html`)
           EOF
-
-          if [ -f "checkov-markdown-report.md" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "---" >> $GITHUB_STEP_SUMMARY
-            echo "## 🛡️ Checkov Security Scan SARIF Summary" >> $GITHUB_STEP_SUMMARY
-            cat checkov-markdown-report.md >> $GITHUB_STEP_SUMMARY
-          fi
 
       # 8. Pipeline Gatekeeper (Fail if core steps errored)
       - name: Pipeline Gatekeeper
