@@ -10,19 +10,13 @@ locals {
   # S3 bucket name
   bucket_name = var.domain_name
 
-  # S3 bucket website endpoint
-  website_endpoint = module.s3_bucket.website_endpoint
-
-  # Route53 zone ID
-  route53_zone_id = module.route53.route53_zone_id
-
   # ACM certificate ARN
   acm_certificate_arn = module.acm.acm_certificate_arn
 
   # ACM validation options
   acm_validation_options = module.acm.domain_validation_options
 
-  #ACM validation records FQDN list
+  # ACM validation records FQDN list
   acm_validation_records_fqdns = module.route53.validation_record_fqdns
 
   # S3 regional domain name

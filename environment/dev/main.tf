@@ -20,9 +20,7 @@ provider "aws" {
 
 module "s3_bucket" {
   source                      = "../../modules/s3-bucket"
-  environment                 = var.environment
   bucket_name                 = local.bucket_name
-  project                     = var.project
   tags                        = local.common_tags
   mime_types                  = local.mime_types
   cloudfront_distribution_arn = local.cloudfront_distribution_arn
@@ -31,10 +29,6 @@ module "s3_bucket" {
 module "route53" {
   source                                 = "../../modules/route53"
   domain_name                            = var.domain_name
-  zone_name                              = var.zone_name
-  s3_website_endpoint                    = local.website_endpoint
-  environment                            = var.environment
-  tags                                   = local.common_tags
   domain_validation_options              = local.acm_validation_options
   cloudfront_distribution_domain_name    = local.cloudfront_distribution_domain_name
   cloudfront_distribution_hosted_zone_id = local.cloudfront_distribution_hosted_zone_id
@@ -46,7 +40,6 @@ module "acm" {
   providers                    = { aws = aws.us_east_1 }
   domain_name                  = var.domain_name
   environment                  = var.environment
-  route53_zone_id              = local.route53_zone_id
   tags                         = local.common_tags
   acm_validation_records_fqdns = local.acm_validation_records_fqdns
 }

@@ -5,9 +5,8 @@ aws_region = "us-east-1"
 project     = "my-static-site"
 environment = "dev"
 
-# Domain & Route 53 configuration
+# Domain configuration
 domain_name = "example.com"
-zone_name   = "example.com"
 
 # CloudFront & S3 configuration
 origin_path         = "/public"

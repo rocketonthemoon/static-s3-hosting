@@ -18,11 +18,6 @@ variable "domain_name" {
   type        = string
 }
 
-variable "zone_name" {
-  description = "Zone name"
-  type        = string
-}
-
 variable "origin_path" {
   description = "Origin path"
   type        = string
