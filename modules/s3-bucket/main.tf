@@ -3,6 +3,7 @@ resource "aws_s3_bucket" "this" {
   #checkov:skip=CKV_AWS_145:Dev environment learning setup - AES256 default encryption is sufficient
   #checkov:skip=CKV_AWS_144:Dev environment learning setup - cross-region replication not required
   #checkov:skip=CKV2_AWS_62:Dev environment learning setup - event notifications not required
+  #checkov:skip=CKV2_AWS_61:Dev environment learning setup - lifecycle configuration not required
   bucket        = var.bucket_name
   force_destroy = true
 

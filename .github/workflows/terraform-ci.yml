@@ -48,16 +48,24 @@ jobs:
         run: terraform validate -no-color
         continue-on-error: true
 
-      # 3. Checkov Security Scan
+      # 3. Checkov Security Scan Action
       - name: Run Checkov Security Scan
         id: checkov
         uses: bridgecrewio/checkov-action@v12
         with:
           framework: terraform
-          output_format: cli
+          output_format: cli,sarif
+          output_file_path: console,checkov-results.sarif
           soft_fail: true
 
-      # 4. Trivy Security Scan (SARIF for GitHub Security Tab)
+      - name: Upload Checkov Report Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkov-security-report
+          path: checkov-results.sarif
+
+      # 4. Trivy Security Scan Action
       - name: Run Trivy Scanner (SARIF)
         uses: aquasecurity/trivy-action@master
         with:
@@ -75,7 +83,7 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
-      # 5. Trivy HTML Report Artifact
+      # 5. Trivy HTML Report Artifact Action
       - name: Generate Trivy HTML Report
         uses: aquasecurity/trivy-action@master
         if: always()
@@ -100,46 +108,63 @@ jobs:
         run: terraform test -no-color
         continue-on-error: true
 
-      # 7. Post PR Feedback Comment
+      # 7. Publish GitHub Actions Job Summary ($GITHUB_STEP_SUMMARY)
+      - name: Publish Workflow Job Summary
+        if: always()
+        run: |
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+          ### 🚀 Terraform CI/CD Summary
+
+          | Step | Status |
+          |---|---|
+          | 🎨 **Format Check (`terraform fmt`)** | `${{ steps.fmt.outcome }}` |
+          | ⚙️ **Initialization (`terraform init`)** | `${{ steps.init.outcome }}` |
+          | ✅ **Validation (`terraform validate`)** | `${{ steps.validate.outcome }}` |
+          | 🛡️ **Checkov Security Scan** | `${{ steps.checkov.outcome }}` |
+          | 🔍 **Trivy Security Scan** | Completed (Artifact & SARIF) |
+          | 🧪 **Terraform Tests (`terraform test`)** | `${{ steps.test.outcome }}` |
+
+          #### 📌 Generated Artifacts
+          - **Checkov Security Report**: `checkov-security-report` (`checkov-results.sarif`)
+          - **Trivy Security Report**: `trivy-security-report` (`trivy-report.html`)
+          EOF
+
+      # 8. Sticky PR Comment Action
       - name: Post PR Summary Comment
-        uses: actions/github-script@v7
+        uses: marocchino/sticky-pull-request-comment@v2
         if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
         with:
-          script: |
-            const output = `#### Terraform CI Results
-            * **Format Check (\`terraform fmt\`):** \`${{ steps.fmt.outcome }}\`
-            * **Initialization (\`terraform init\`):** \`${{ steps.init.outcome }}\`
-            * **Validation (\`terraform validate\`):** \`${{ steps.validate.outcome }}\`
-            * **Checkov Scan:** \`${{ steps.checkov.outcome }}\`
-            * **Trivy Scan:** Completed (Uploaded to Security Tab & Artifacts)
-            * **Terraform Tests (\`terraform test\`):** \`${{ steps.test.outcome }}\`
+          header: terraform-ci-summary
+          message: |
+            ### 🚀 Terraform CI Results
 
-            <details><summary>Show Validation Details</summary>
+            | Step | Status |
+            |---|---|
+            | 🎨 **Format Check (`terraform fmt`)** | `${{ steps.fmt.outcome }}` |
+            | ⚙️ **Initialization (`terraform init`)** | `${{ steps.init.outcome }}` |
+            | ✅ **Validation (`terraform validate`)** | `${{ steps.validate.outcome }}` |
+            | 🛡️ **Checkov Security Scan** | `${{ steps.checkov.outcome }}` |
+            | 🔍 **Trivy Security Scan** | Completed |
+            | 🧪 **Terraform Tests (`terraform test`)** | `${{ steps.test.outcome }}` |
 
-            \`\`\`
+            <details><summary>Show Validation Output</summary>
+
+            ```
             ${{ steps.validate.outputs.stdout || steps.validate.outputs.stderr || 'No validation errors' }}
-            \`\`\`
+            ```
 
             </details>
 
-            <details><summary>Show Test Details</summary>
+            <details><summary>Show Test Output</summary>
 
-            \`\`\`
+            ```
             ${{ steps.test.outputs.stdout || steps.test.outputs.stderr || 'No test output' }}
-            \`\`\`
+            ```
 
             </details>
 
-            *Pushed by: @${{ github.actor }} | Event: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
-
-      # 8. Pipeline Gatekeeper (Fail if core steps errored)
+      # 9. Pipeline Gatekeeper (Fail if core steps errored)
       - name: Pipeline Gatekeeper
         if: |
           steps.fmt.outcome == 'failure' ||
