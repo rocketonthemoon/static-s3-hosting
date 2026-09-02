@@ -50,11 +50,12 @@ jobs:
       - name: Run Checkov Security Scan
         id: checkov
         uses: bridgecrewio/checkov-action@v12
+        continue-on-error: true
         with:
           framework: terraform
           output_format: cli,sarif
           output_file_path: console,checkov-results.sarif
-          soft_fail: true
+          soft_fail: false
 
       - name: Render Checkov Report to Summary
         uses: b-zurg/sarif-to-markdown@v1
@@ -82,7 +83,7 @@ jobs:
           scanners: 'vuln,secret,config'
           format: 'sarif'
           output: 'trivy-sast-results.sarif'
-          exit-code: '0'
+          exit-code: '1'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
 
@@ -109,7 +110,22 @@ jobs:
 
       # 6. Pipeline Gatekeeper (Fail if core steps errored)
       - name: Pipeline Gatekeeper
-        if: always() && (steps.fmt.outcome == 'failure' || steps.init.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.checkov.outcome == 'failure' || steps.trivy.outcome == 'failure' || steps.test.outcome == 'failure')
+        if: always()
         run: |
-          echo "One or more critical validation or unit test steps failed."
-          exit 1
+          echo "=== Pipeline Outcomes ==="
+          echo "Format Check: ${{ steps.fmt.outcome }}"
+          echo "Init: ${{ steps.init.outcome }}"
+          echo "Validate: ${{ steps.validate.outcome }}"
+          echo "Checkov Scan: ${{ steps.checkov.outcome }}"
+          echo "Trivy SAST Scan: ${{ steps.trivy.outcome }}"
+          echo "Terraform Tests: ${{ steps.test.outcome }}"
+
+          if [ "${{ steps.fmt.outcome }}" = "failure" ] || \
+             [ "${{ steps.init.outcome }}" = "failure" ] || \
+             [ "${{ steps.validate.outcome }}" = "failure" ] || \
+             [ "${{ steps.checkov.outcome }}" = "failure" ] || \
+             [ "${{ steps.trivy.outcome }}" = "failure" ] || \
+             [ "${{ steps.test.outcome }}" = "failure" ]; then
+            echo "::error::Pipeline failed because one or more validation or security steps failed."
+            exit 1
+          fi
