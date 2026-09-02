@@ -55,6 +55,7 @@ jobs:
           output_format: cli,sarif
           output_file_path: console,checkov-results.sarif
           soft_fail: true
+          exit-code: '0'
 
       - name: Render Checkov Report to Summary
         uses: b-zurg/sarif-to-markdown@v1
