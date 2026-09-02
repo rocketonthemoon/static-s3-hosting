@@ -107,33 +107,14 @@ jobs:
         run: terraform test -no-color
         continue-on-error: true
 
-      # 6. Publish Overall Workflow Summary
-      - name: Publish Workflow Summary Header
-        if: always()
-        run: |
-          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-          ### 🚀 Terraform CI Summary Overview
-
-          | Step | Status |
-          |---|---|
-          | 🎨 **Format Check (`terraform fmt`)** | `${{ steps.fmt.outcome }}` |
-          | ⚙️ **Initialization (`terraform init`)** | `${{ steps.init.outcome }}` |
-          | ✅ **Validation (`terraform validate`)** | `${{ steps.validate.outcome }}` |
-          | 🛡️ **Checkov Security Scan** | `${{ steps.checkov.outcome }}` |
-          | 🔍 **Trivy SAST Scan** | `${{ steps.trivy.outcome }}` |
-          | 🧪 **Terraform Tests (`terraform test`)** | `${{ steps.test.outcome }}` |
-
-          #### 📌 Downloadable Artifacts
-          - **Checkov Security Report**: `checkov-security-report` (`checkov-results.sarif`)
-          - **Trivy SAST Report**: `trivy-sast-report` (`trivy-sast-results.sarif`)
-          EOF
-
-      # 7. Pipeline Gatekeeper (Fail if core steps errored)
+      # 6. Pipeline Gatekeeper (Fail if core steps errored)
       - name: Pipeline Gatekeeper
         if: |
           steps.fmt.outcome == 'failure' ||
           steps.init.outcome == 'failure' ||
           steps.validate.outcome == 'failure' ||
+          steps.checkov.outcome == 'failure' ||
+          steps.trivy.outcome == 'failure' ||
           steps.test.outcome == 'failure'
         run: |
           echo "One or more critical validation or unit test steps failed."
