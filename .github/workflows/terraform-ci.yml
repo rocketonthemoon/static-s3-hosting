@@ -55,7 +55,6 @@ jobs:
           output_format: cli,sarif
           output_file_path: console,checkov-results.sarif
           soft_fail: true
-          exit-code: '0'
 
       - name: Render Checkov Report to Summary
         uses: b-zurg/sarif-to-markdown@v1
@@ -111,12 +110,14 @@ jobs:
       # 6. Pipeline Gatekeeper (Fail if core steps errored)
       - name: Pipeline Gatekeeper
         if: |
-          steps.fmt.outcome == 'failure' ||
-          steps.init.outcome == 'failure' ||
-          steps.validate.outcome == 'failure' ||
-          steps.checkov.outcome == 'failure' ||
-          steps.trivy.outcome == 'failure' ||
-          steps.test.outcome == 'failure'
+          always() && (
+            steps.fmt.outcome == 'failure' ||
+            steps.init.outcome == 'failure' ||
+            steps.validate.outcome == 'failure' ||
+            steps.checkov.outcome == 'failure' ||
+            steps.trivy.outcome == 'failure' ||
+            steps.test.outcome == 'failure'
+          )
         run: |
           echo "One or more critical validation or unit test steps failed."
           exit 1
