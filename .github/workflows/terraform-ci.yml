@@ -109,15 +109,7 @@ jobs:
 
       # 6. Pipeline Gatekeeper (Fail if core steps errored)
       - name: Pipeline Gatekeeper
-        if: |
-          always() && (
-            steps.fmt.outcome == 'failure' ||
-            steps.init.outcome == 'failure' ||
-            steps.validate.outcome == 'failure' ||
-            steps.checkov.outcome == 'failure' ||
-            steps.trivy.outcome == 'failure' ||
-            steps.test.outcome == 'failure'
-          )
+        if: always() && (steps.fmt.outcome == 'failure' || steps.init.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.checkov.outcome == 'failure' || steps.trivy.outcome == 'failure' || steps.test.outcome == 'failure')
         run: |
           echo "One or more critical validation or unit test steps failed."
           exit 1
