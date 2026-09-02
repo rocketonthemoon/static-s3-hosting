@@ -9,7 +9,7 @@ Infrastructure-as-Code repository for deploying a secure, high-performance stati
 - **SSL/TLS Certificate**: AWS Certificate Manager (ACM) certificate issued in `us-east-1` (N. Virginia) with automated DNS validation.
 - **DNS & Routing**: AWS Route 53 managing domain validation records and alias records pointing custom domain traffic to CloudFront.
 
-```
+```text
                   +-------------------+
                   |   Route 53 DNS    |
                   +---------+---------+
@@ -25,6 +25,8 @@ Infrastructure-as-Code repository for deploying a secure, high-performance stati
 
 ```text
 static-website/
+├── Architecture.md         # Detailed architectural, provisioning, and runtime specification
+├── README.md               # Root repository documentation
 ├── assets/                 # Website static source files (index.html, error.html, etc.)
 ├── environment/
 │   └── dev/                # Environment deployment configuration
@@ -44,7 +46,7 @@ static-website/
 
 - [`modules/acm`](modules/acm/README.md): Provisions ACM SSL/TLS certificates in `us-east-1` and waits for DNS validation.
 - [`modules/cloudfront`](modules/cloudfront/README.md): Deploys CloudFront distribution with custom error handling (`/error.html`) and Origin Access Control.
-- [`modules/route53`](modules/route53/README.md): Manages Route 53 DNS validation CNAME records and domain A alias records.
+- [`modules/route53`](modules/route53/README.md): Manages Route 53 DNS validation CNAME records (`allow_overwrite = true`) and domain A alias records.
 - [`modules/s3-bucket`](modules/s3-bucket/README.md): Configures private S3 bucket, uploads website assets to `/public/`, and applies CloudFront OAC bucket policy.
 
 ## Deployment Instructions
